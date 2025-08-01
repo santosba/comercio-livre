@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary">
+                    <i class="fas fa-user-circle me-2"></i>
+                    Perfil do Utilizador
+                </h2>
+                <p class="text-muted">Veja e gere as informações do seu perfil</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Profile Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-cog me-2"></i>
+                        Profile Details
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary fw-bold mb-4">
+                        <i class="fas fa-user me-2"></i>
+                        {{ user.username }}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-envelope text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Email</small>
+                                    <span class="fw-semibold">{{ user.email|default:"Not provided" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-id-badge text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Nome</small>
+                                    <span class="fw-semibold">{{ user.first_name|default:"Not provided" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-id-badge text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Apelido</small>
+                                    <span class="fw-semibold">{{ user.last_name|default:"Not provided" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Data de Registo</small>
+                                    <span class="fw-semibold">{{ user.date_joined|date:"F d, Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Último Login</small>
+                                    <span class="fw-semibold">{{ user.last_login|date:"F d, Y H:i" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if user.morada %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Morada</small>
+                                    <span class="fw-semibold">{{ user.morada|default:"Not provided" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.telefone %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-phone text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <small class="text-muted d-block">Telefone</small>
+                                    <span class="fw-semibold">{{ user.telefone|default:"Not provided" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'profile_update' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Profile
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Logout
+                </a>
+                {% if user.is_superuser %}
+                    <a href="{% url 'user_list' %}" class="btn btn-info btn-lg">
+                        <i class="fas fa-users me-2"></i>
+                        View All Users
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Google OAuth Test{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Google OAuth Configuration Test</h3>
+                </div>
+                <div class="card-body">
+                    {% if google_app_configured %}
+                        <div class="alert alert-success">
+                            <h4>✅ Google OAuth is configured!</h4>
+                            <p><strong>Provider:</strong> {{ google_app.provider }}</p>
+                            <p><strong>App Name:</strong> {{ google_app.name }}</p>
+                            <p><strong>Client ID:</strong> {{ google_app.client_id }}</p>
+                            <p><strong>Sites:</strong> {{ google_app.sites.count }}</p>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5>Test Google OAuth Login:</h5>
+                            <a href="{% url 'google_oauth_login' %}" class="btn btn-danger btn-lg">
+                                <i class="fab fa-google"></i> Test Google Login
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <h4>⚠️ Google OAuth is not configured</h4>
+                            <p>Please configure Google OAuth in Django admin or run the setup command.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <h5>Available OAuth URLs:</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>Login:</strong> 
+                                <a href="{% url 'google_oauth_login' %}">{% url 'google_oauth_login' %}</a>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Callback:</strong> 
+                                <a href="{% url 'google_oauth_callback' %}">{% url 'google_oauth_callback' %}</a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'login' %}" class="btn btn-secondary">← Back to Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

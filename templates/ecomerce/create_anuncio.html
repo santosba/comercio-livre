@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar Anúncio{% endblock %}
+
+{% load static %}
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-primary">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Criar Novo Anúncio
+                </h2>
+                <p class="text-muted">Preencha as informações abaixo para criar seu anúncio</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Form Card -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Informações do Produto
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="anuncioForm">
+                        {% csrf_token %}
+                        
+                        <!-- Progress Bar -->
+                        <div class="mb-4">
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="formProgress"></div>
+                            </div>
+                            <small class="text-muted">Complete os campos para continuar</small>
+                        </div>
+
+                        <div class="row">
+                            <!-- Title -->
+                            <div class="col-md-12 mb-4">
+                                <label for="titulo" class="form-label fw-semibold">
+                                    <i class="fas fa-tag text-primary me-2"></i>
+                                    Título do Produto *
+                                </label>
+                                <input type="text" 
+                                       id="titulo" 
+                                       name="titulo" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="Ex: iPhone 13 Pro Max 256GB"
+                                       required>
+                                <div class="form-text">Seja específico e descritivo (mínimo 3 caracteres)</div>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="col-md-6 mb-4">
+                                <label for="categoria" class="form-label fw-semibold">
+                                    <i class="fas fa-list text-primary me-2"></i>
+                                    Categoria *
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           id="categoria" 
+                                           name="categoria" 
+                                           class="form-control" 
+                                           readonly 
+                                           required 
+                                           data-bs-toggle="modal" 
+                                           data-bs-target="#categoriaModal" 
+                                           placeholder="Clique para selecionar uma categoria"
+                                           style="cursor: pointer;">
+                                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#categoriaModal">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="categoria_id" name="categoria_id">
+                            </div>
+
+                            <!-- Price -->
+                            <div class="col-md-6 mb-4">
+                                <label for="preco" class="form-label fw-semibold">
+                                    <i class="fas fa-dollar-sign text-primary me-2"></i>
+                                    Preço (XOF) *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">XOF</span>
+                                    <input type="number" 
+                                           id="preco" 
+                                           name="preco" 
+                                           class="form-control" 
+                                           step="0.01" 
+                                           min="0"
+                                           placeholder="0.00"
+                                           required>
+                                </div>
+                                <div class="form-text">Digite o preço em francos CFA</div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="descricao" class="form-label fw-semibold">
+                                <i class="fas fa-align-left text-primary me-2"></i>
+                                Descrição *
+                            </label>
+                            <textarea id="descricao" 
+                                      name="descricao" 
+                                      rows="5" 
+                                      class="form-control" 
+                                      placeholder="Descreva seu produto detalhadamente: estado, características, motivo da venda..."
+                                      required></textarea>
+                            <div class="form-text">Forneça uma descrição completa e honesta do produto</div>
+                        </div>
+
+                        <!-- Images -->
+                        <div class="mb-4">
+                            <label for="imagens" class="form-label fw-semibold">
+                                <i class="fas fa-images text-primary me-2"></i>
+                                Fotos do Produto *
+                            </label>
+                            <div class="upload-area border border-2 border-dashed rounded p-4 text-center" 
+                                 style="border-color: #dee2e6 !important; background-color: #f8f9fa;"
+                                 onclick="document.getElementById('imagens').click()">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Clique ou arraste suas fotos aqui</h5>
+                                <p class="text-muted mb-0">Máximo 5 imagens | JPG, PNG, GIF</p>
+                                <input type="file" 
+                                       id="imagens" 
+                                       name="imagens" 
+                                       accept="image/*" 
+                                       multiple 
+                                       required 
+                                       onchange="previewImages(this)" 
+                                       class="d-none">
+                            </div>
+                            <div id="galeria" class="row mt-3"></div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-3" id="submitBtn">
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Criar Anúncio
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Category Selection Modal -->
+<div class="modal fade" id="categoriaModal" tabindex="-1" aria-labelledby="categoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="categoriaModalLabel">
+                    <i class="fas fa-list me-2"></i>
+                    Selecione uma Categoria
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    {% for categoria in categories %}
+                        <div class="col-md-6 border-end">
+                            <div class="p-3">
+                                <h6 class="text-primary fw-bold mb-3">
+                                    <i class="fas fa-folder me-2"></i>
+                                    {{ categoria.name }}
+                                </h6>
+                                <div class="list-group list-group-flush">
+                                    {% for sub in categoria.subcategories.all %}
+                                        <a href="#" 
+                                           class="list-group-item list-group-item-action border-0 rounded mb-1 subcategory-item" 
+                                           onclick="selecionarCategoria('{{ sub.id }}', '{{ categoria.name }} > {{ sub.name }}')"
+                                           data-bs-dismiss="modal">
+                                            <i class="fas fa-tag me-2 text-muted"></i>
+                                            {{ sub.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% if forloop.counter|divisibleby:2 or forloop.last %}
+                            </div><div class="row g-0">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-area {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: #007bff !important;
+    background-color: #e3f2fd !important;
+}
+
+.subcategory-item:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(5px);
+    transition: all 0.2s ease;
+}
+
+.image-preview {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+}
+
+.image-preview:hover {
+    transform: scale(1.05);
+}
+
+.image-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(220, 53, 69, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.image-remove:hover {
+    background: rgba(220, 53, 69, 1);
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('anuncioForm');
+    const progressBar = document.getElementById('formProgress');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Form validation and progress
+    function updateProgress() {
+        const requiredFields = form.querySelectorAll('[required]');
+        let filledFields = 0;
+        
+        requiredFields.forEach(field => {
+            if (field.type === 'file') {
+                if (field.files.length > 0) filledFields++;
+            } else if (field.value.trim() !== '') {
+                filledFields++;
+            }
+        });
+        
+        const progress = (filledFields / requiredFields.length) * 100;
+        progressBar.style.width = progress + '%';
+        
+        if (progress === 100) {
+            progressBar.classList.remove('bg-primary');
+            progressBar.classList.add('bg-success');
+            submitBtn.disabled = false;
+        } else {
+            progressBar.classList.remove('bg-success');
+            progressBar.classList.add('bg-primary');
+            submitBtn.disabled = true;
+        }
+    }
+    
+    // Listen to form changes
+    form.addEventListener('input', updateProgress);
+    form.addEventListener('change', updateProgress);
+    
+    // Initial progress check
+    updateProgress();
+});
+
+function previewImages(input) {
+    const galeria = document.getElementById('galeria');
+    galeria.innerHTML = '';
+    
+    if (input.files.length > 5) {
+        alert('Você pode adicionar no máximo 5 imagens.');
+        input.value = '';
+        return;
+    }
+    
+    Array.from(input.files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const col = document.createElement('div');
+            col.className = 'col-md-2 col-4 mb-3';
+            
+            col.innerHTML = `
+                <div class="image-preview">
+                    <img src="${e.target.result}" 
+                         class="img-fluid rounded shadow-sm" 
+                         style="width: 100%; height: 120px; object-fit: cover;">
+                    <button type="button" 
+                            class="image-remove" 
+                            onclick="removeImage(${index})"
+                            title="Remover imagem">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            galeria.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function removeImage(index) {
+    const input = document.getElementById('imagens');
+    const dt = new DataTransfer();
+    
+    Array.from(input.files).forEach((file, i) => {
+        if (i !== index) {
+            dt.items.add(file);
+        }
+    });
+    
+    input.files = dt.files;
+    previewImages(input);
+}
+
+function selecionarCategoria(id, nome) {
+    document.getElementById('categoria').value = nome;
+    document.getElementById('categoria_id').value = id;
+    
+    // Add visual feedback
+    const categoryInput = document.getElementById('categoria');
+    categoryInput.classList.add('border-success');
+    setTimeout(() => {
+        categoryInput.classList.remove('border-success');
+    }, 2000);
+}
+
+// Drag and drop functionality
+const uploadArea = document.querySelector('.upload-area');
+const fileInput = document.getElementById('imagens');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    uploadArea.style.borderColor = '#007bff';
+    uploadArea.style.backgroundColor = '#e3f2fd';
+}
+
+function unhighlight(e) {
+    uploadArea.style.borderColor = '#dee2e6';
+    uploadArea.style.backgroundColor = '#f8f9fa';
+}
+
+uploadArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    fileInput.files = files;
+    previewImages(fileInput);
+}
+</script>
+{% endblock %}
+

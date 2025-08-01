@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Product Images -->
+            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% for photo in photos %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ photo.image.url }}" class="d-block w-100 rounded" alt="{{ photo.imageTitle }}" style="height: 400px; object-fit: cover;">
+                        </div>
+                    {% empty %}
+                        <div class="carousel-item active">
+                            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if photos.count > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Próximo</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="card-title">{{ product.name }}</h2>
+                    <h3 class="text-success mb-3">{{ product.price }} XOF</h3>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted">Descrição:</h6>
+                        <p class="card-text">{{ product.description }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted">Categoria:</h6>
+                        <span class="badge bg-secondary">{{ product.category.name }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted">Anunciado em:</h6>
+                        <small class="text-muted">{{ product.created_at|date:"d/m/Y" }}</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted">Vendedor:</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <div>
+                                <strong>{{ product.user.first_name }} {{ product.user.last_name }}</strong><br>
+                                <small class="text-muted">Membro desde {{ product.user.date_joined|date:"m/Y" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if user.is_authenticated %}
+                        {% if product.user != user %}
+                            <form method="post" action="{% url 'start_chat' product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-comments me-2"></i>
+                                    Conversar com o Vendedor
+                                </button>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Este é seu produto.
+                            </div>
+                            <a href="{% url 'product_update' product.id %}" class="btn btn-warning btn-lg w-100">
+                                <i class="fas fa-edit me-2"></i>
+                                Editar Produto
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <a href="{% url 'login' %}" class="alert-link">Faça login</a> para conversar com o vendedor.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Back to home button -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar para a página inicial
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

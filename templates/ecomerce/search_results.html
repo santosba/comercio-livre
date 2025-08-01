@@ -1,0 +1,142 @@
+{% if page_obj %}
+    <!-- Results Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">
+            {% if query and category_name %}
+                Resultados para "{{ query }}" em {{ category_name }}
+            {% elif query %}
+                Resultados para "{{ query }}"
+            {% elif category_name %}
+                Produtos em {{ category_name }}
+            {% else %}
+                Todos os produtos
+            {% endif %}
+            <span class="badge bg-primary">{{ total_count }}</span>
+        </h5>
+        <small class="text-muted">
+            {% if page_obj.paginator.num_pages > 1 %}
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            {% else %}
+                {{ total_count }} produto{{ total_count|pluralize }}
+            {% endif %}
+        </small>
+    </div>
+    
+    {% if page_obj.object_list %}
+        <!-- Products Grid -->
+        <div class="row">
+            {% for product in page_obj.object_list %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card product-card h-100 shadow-sm">
+                        <div class="position-relative">
+                            {% if product.photos.first %}
+                                <img src="{{ product.photos.first.image.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.name }}" 
+                                     style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="fas fa-image fa-2x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <div class="price-badge">
+                                {{ product.price }} XOF
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.name|truncatechars:50 }}</h6>
+                            <p class="card-text text-muted small">
+                                {{ product.description|truncatewords:15 }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-tag me-1"></i>
+                                    {{ product.category.name }}
+                                </small>
+                                <small class="text-muted">
+                                    {{ product.created_at|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ product.user.first_name }}
+                                </small>
+                                <a href="{% url 'product_detail' product.id %}" 
+                                   class="btn btn-primary btn-sm">
+                                    Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+            <nav aria-label="Navegação dos resultados">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link pagination-link" 
+                               href="#" 
+                               data-page="{{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-chevron-left"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link pagination-link" 
+                                   href="#" 
+                                   data-page="{{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link pagination-link" 
+                               href="#" 
+                               data-page="{{ page_obj.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+        
+    {% else %}
+        <!-- No Results -->
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Nenhum produto encontrado</h4>
+            <p class="text-muted">Tente ajustar seus filtros de busca.</p>
+        </div>
+    {% endif %}
+{% endif %}

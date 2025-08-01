@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Buscar Produtos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Search Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">
+                <i class="fas fa-search me-2"></i>
+                Buscar Produtos
+            </h2>
+        </div>
+    </div>
+    
+    <!-- Search Filters -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="searchForm">
+                        <!-- Search Query -->
+                        <div class="mb-3">
+                            <label for="search-query" class="form-label">Buscar por:</label>
+                            <input type="text" class="form-control" id="search-query" name="q" 
+                                   placeholder="Digite o que você procura..." value="{{ initial_query }}">
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            <label for="category-filter" class="form-label">Categoria:</label>
+                            <select class="form-select" id="category-filter" name="category">
+                                <option value="">Todas as categorias</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == initial_category %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Subcategory Filter -->
+                        <div class="mb-3">
+                            <label for="subcategory-filter" class="form-label">Subcategoria:</label>
+                            <select class="form-select" id="subcategory-filter" name="subcategory" disabled>
+                                <option value="">Selecione uma categoria primeiro</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Price Range -->
+                        <div class="mb-3">
+                            <label class="form-label">Faixa de preço (XOF):</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="min-price" name="min_price" 
+                                           placeholder="Mín" min="0" step="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="max-price" name="max_price" 
+                                           placeholder="Máx" min="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Search Button -->
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>
+                            Buscar
+                        </button>
+                        
+                        <!-- Clear Filters -->
+                        <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="clear-filters">
+                            <i class="fas fa-times me-2"></i>
+                            Limpar Filtros
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Results -->
+        <div class="col-md-9">
+            <div id="search-results">
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Use os filtros para buscar produtos</h4>
+                    <p class="text-muted">Digite o que você procura e use os filtros para encontrar o produto perfeito.</p>
+                </div>
+            </div>
+            
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <h5 class="mt-3 text-muted">Buscando produtos...</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-card {
+    transition: transform 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.price-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const categoryFilter = document.getElementById('category-filter');
+    const subcategoryFilter = document.getElementById('subcategory-filter');
+    const searchResults = document.getElementById('search-results');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    
+    // Handle category change to load subcategories
+    categoryFilter.addEventListener('change', async function() {
+        const categoryId = this.value;
+        
+        if (categoryId) {
+            try {
+                const response = await fetch(`/get-subcategories/?category_id=${categoryId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                subcategoryFilter.innerHTML = '<option value="">Todas as subcategorias</option>';
+                data.subcategories.forEach(sub => {
+                    subcategoryFilter.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+                });
+                subcategoryFilter.disabled = false;
+                
+            } catch (error) {
+                console.error('Error fetching subcategories:', error);
+                subcategoryFilter.innerHTML = '<option value="">Erro ao carregar subcategorias</option>';
+                subcategoryFilter.disabled = true;
+            }
+        } else {
+            subcategoryFilter.innerHTML = '<option value="">Selecione uma categoria primeiro</option>';
+            subcategoryFilter.disabled = true;
+        }
+    });
+    
+    // Handle form submission
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        performSearch();
+    });
+    
+    // Handle input changes for real-time search
+    const inputs = searchForm.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.id === 'category-filter') return; // Skip category change as it's handled separately
+            performSearch();
+        });
+    });
+    
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+        searchForm.reset();
+        subcategoryFilter.innerHTML = '<option value="">Selecione uma categoria primeiro</option>';
+        subcategoryFilter.disabled = true;
+        searchResults.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">Use os filtros para buscar produtos</h4>
+                <p class="text-muted">Digite o que você procura e use os filtros para encontrar o produto perfeito.</p>
+            </div>
+        `;
+    });
+    
+    // Auto-search if initial query or category exists
+    const initialQuery = document.getElementById('search-query').value;
+    const initialCategory = document.getElementById('category-filter').value;
+    if (initialQuery.trim() || initialCategory) {
+        // If there's an initial category, load its subcategories first
+        if (initialCategory) {
+            fetch(`/get-subcategories/?category_id=${initialCategory}`)
+                .then(response => response.json())
+                .then(data => {
+                    subcategoryFilter.innerHTML = '<option value="">Todas as subcategorias</option>';
+                    data.subcategories.forEach(sub => {
+                        subcategoryFilter.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+                    });
+                    subcategoryFilter.disabled = false;
+                    // Now perform the search
+                    performSearch();
+                });
+        } else {
+            performSearch();
+        }
+    }
+    
+    function performSearch(page = 1) {
+        const formData = new FormData(searchForm);
+        formData.append('page', page);
+        
+        const params = new URLSearchParams(formData);
+        
+        // Show loading spinner
+        searchResults.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+        
+        fetch(`/search-results/?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = data.html;
+                
+                // Add pagination event listeners
+                addPaginationListeners();
+                
+                // Hide loading spinner
+                loadingSpinner.style.display = 'none';
+                searchResults.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                searchResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erro ao buscar produtos. Tente novamente.
+                    </div>
+                `;
+                loadingSpinner.style.display = 'none';
+                searchResults.style.display = 'block';
+            });
+    }
+    
+    function addPaginationListeners() {
+        const paginationLinks = document.querySelectorAll('.pagination-link');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                performSearch(page);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

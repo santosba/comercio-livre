@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat - {{ conversation.product.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Chat Header -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <a href="{% url 'chat_list' %}" class="btn btn-outline-light btn-sm me-3">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        {% if conversation.product.photos.first %}
+                            <img src="{{ conversation.product.photos.first.image.url }}" 
+                                 alt="{{ conversation.product.name }}" 
+                                 class="rounded me-3" 
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">{{ conversation.product.name }}</h6>
+                            <small>
+                                {% if conversation.buyer == request.user %}
+                                    Conversando com: {{ conversation.seller.first_name }} {{ conversation.seller.last_name }}
+                                {% else %}
+                                    Conversando com: {{ conversation.buyer.first_name }} {{ conversation.buyer.last_name }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messages Area -->
+                <div class="card-body p-0" style="height: 400px; overflow-y: auto;" id="messages-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="message p-3 {% if message.sender == request.user %}text-end bg-light{% endif %}">
+                                <div class="d-inline-block" style="max-width: 70%;">
+                                    {% if message.sender == request.user %}
+                                        <div class="bg-primary text-white rounded p-2 mb-1">
+                                            {{ message.message }}
+                                        </div>
+                                        <small class="text-muted">{{ message.created_at|date:"d/m/Y H:i" }}</small>
+                                    {% else %}
+                                        <div class="bg-secondary text-white rounded p-2 mb-1">
+                                            <strong>{{ message.sender.first_name }}:</strong> {{ message.message }}
+                                        </div>
+                                        <small class="text-muted">{{ message.created_at|date:"d/m/Y H:i" }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma mensagem ainda. Comece a conversa!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Message Input -->
+                <div class="card-footer">
+                    <form method="post" class="d-flex">
+                        {% csrf_token %}
+                        <input type="text" 
+                               name="message" 
+                               class="form-control me-2" 
+                               placeholder="Digite sua mensagem..." 
+                               required
+                               autocomplete="off">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Product Info -->
+            <div class="card mt-3 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            {% if conversation.product.photos.first %}
+                                <img src="{{ conversation.product.photos.first.image.url }}" 
+                                     alt="{{ conversation.product.name }}" 
+                                     class="img-fluid rounded">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h6>{{ conversation.product.name }}</h6>
+                            <p class="text-muted mb-1">{{ conversation.product.description|truncatewords:15 }}</p>
+                            <strong class="text-success"> {{ conversation.product.price }} XOF</strong>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'product_detail' conversation.product.id %}" class="btn btn-outline-primary btn-sm">
+                                Ver Produto
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-scroll to bottom of messages
+document.addEventListener('DOMContentLoaded', function() {
+    const messagesContainer = document.getElementById('messages-container');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Focus on message input
+    const messageInput = document.querySelector('input[name="message"]');
+    messageInput.focus();
+});
+</script>
+{% endblock %}

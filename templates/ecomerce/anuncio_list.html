@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Meus Anúncios{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Meus Anúncios</h1>
+    
+    {% if products %}
+        <div class="row">
+            {% for product in products %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if product.photos.first %}
+                            <img src="{{ product.photos.first.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/150" class="card-img-top" alt="Imagem não disponível">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text text-muted">{{ product.description|truncatewords:15 }}</p>
+                            <p class="card-text text-success"><strong>{{ product.price }} XOF</strong></p>
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm me-2">Ver Detalhes</a>
+                            <a href="{% url 'product_update' product.id %}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Você ainda não criou nenhum anúncio.</p>
+    {% endif %}
+</div>
+{% endblock %}

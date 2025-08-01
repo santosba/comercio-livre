@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Produto - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Editar Produto
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Product Title -->
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título do Produto *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" 
+                                   value="{{ product.name }}" required>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label for="categoria_id" class="form-label">Categoria *</label>
+                            <select class="form-control" id="categoria_id" name="categoria_id" required>
+                                <option value="">Selecione uma categoria</option>
+                                {% for category in categories %}
+                                    <optgroup label="{{ category.name }}">
+                                        {% for subcategory in category.subcategories.all %}
+                                            <option value="{{ subcategory.id }}" 
+                                                    {% if subcategory.category == product.category %}selected{% endif %}>
+                                                {{ subcategory.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+                            <label for="preco" class="form-label">Preço (XOF) *</label>
+                            <input type="number" class="form-control" id="preco" name="preco" 
+                                   value="{{ product.price }}" step="0.01" min="0" required>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição *</label>
+                            <textarea class="form-control" id="descricao" name="descricao" 
+                                      rows="4" required>{{ product.description }}</textarea>
+                        </div>
+
+                        <!-- Current Images -->
+                        {% if photos %}
+                            <div class="mb-3">
+                                <label class="form-label">Imagens Atuais</label>
+                                <div class="row">
+                                    {% for photo in photos %}
+                                        <div class="col-md-3 mb-2">
+                                            <div class="card">
+                                                <img src="{{ photo.image.url }}" class="card-img-top" 
+                                                     alt="Imagem do produto" style="height: 150px; object-fit: cover;">
+                                                <div class="card-body p-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               name="delete_photos" value="{{ photo.id }}" 
+                                                               id="delete_{{ photo.id }}">
+                                                        <label class="form-check-label" for="delete_{{ photo.id }}">
+                                                            <small>Excluir</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- New Images -->
+                        <div class="mb-3">
+                            <label for="imagens" class="form-label">Adicionar Novas Imagens</label>
+                            <input type="file" class="form-control" id="imagens" name="imagens" 
+                                   multiple accept="image/*">
+                            <div class="form-text">Você pode adicionar até 5 imagens no total. Formatos aceitos: JPG, PNG, GIF.</div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'product_detail' product.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('imagens').addEventListener('change', function(e) {
+    const files = e.target.files;
+    const maxFiles = 5;
+    
+    if (files.length > maxFiles) {
+        alert(`Você pode selecionar no máximo ${maxFiles} imagens.`);
+        e.target.value = '';
+    }
+});
+</script>
+{% endblock %}
