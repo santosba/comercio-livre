@@ -1,3 +1,4 @@
+import dj_database_url
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -125,14 +126,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 # backend/config/settings.py
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': 'postgres',  # Changed from localhost to container name
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
 }
 
 
